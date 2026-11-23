@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Feeder Schedule Planner</title>
+<style>
+:root{
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#fbf8f3;--card:#ffffff;--text:#33394a;--muted:#7f8795;--line:#ebe6dc;--soft:#f3efe7;
+  --accent:#4f9ee0;--accent-text:#ffffff;--sel:#8fdcc3;--sel-glow:rgba(143,220,195,.6);--okc:#2f9e7f;--bad:#e0607a;--bar:#dce8f4;
+  --green:#4fc08d;--green-soft:#dff4e9;
+  color-scheme:light;
+}
+
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 ui-rounded,"Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:22px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+h1{margin:0;font-size:1.9rem;letter-spacing:-.02em;line-height:1.1}
+h1 span{color:var(--accent)}
+.tag{color:var(--muted);margin:4px 0 0;font-size:.9rem}
+.pill{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:.82rem;color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+.pill.live .dot{background:var(--sel);box-shadow:0 0 10px var(--sel-glow)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:16px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:var(--soft);color:var(--text);border-radius:999px;padding:6px 12px;font:inherit;font-size:.85rem;cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.form{display:grid;grid-template-columns:.7fr 2fr 1fr 1fr 1fr auto;gap:10px;align-items:end}
+@media (max-width:700px){.form{grid-template-columns:1fr 1fr}.form .wide{grid-column:1/-1}}
+label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
+input{width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:inherit}
+.btn{padding:10px 16px;border-radius:10px;border:0;background:var(--accent);color:var(--accent-text);font:inherit;font-weight:700;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:600}
+.msg{color:var(--bad);font-size:.85rem;min-height:1.1em;margin-top:8px}
+.top{display:grid;grid-template-columns:1fr 210px;gap:16px}
+@media (max-width:760px){.top{grid-template-columns:1fr}}
+.tl-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap}
+.tl-head h2,.sub h2{margin:0;font-size:1rem}
+.scroll{overflow-x:auto}
+.grid{min-width:520px}
+.axis,.lane{display:grid;grid-template-columns:130px 1fr;align-items:center}
+.axis{font-size:.7rem;color:var(--muted);margin-bottom:4px}
+.ticks{position:relative;height:16px}
+.ticks span{position:absolute;transform:translateX(-50%)}
+.lane{margin:4px 0}
+.lname{font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px}
+.lname small{color:var(--muted)}
+.lname button{background:none;border:0;color:var(--muted);cursor:pointer;padding:0 4px}
+.track{position:relative;height:28px;border-radius:8px;
+  background:repeating-linear-gradient(90deg,var(--soft) 0 1px,transparent 1px var(--tick,10%))}
+.bar{position:absolute;top:2px;bottom:2px;border-radius:7px;background:var(--bar);color:var(--text);font-size:.72rem;
+  display:flex;align-items:center;padding:0 8px;white-space:nowrap;overflow:hidden;
+  transition:background .5s,opacity .5s,box-shadow .5s,color .5s}
+.bar.sel{background:var(--sel);color:#04130d;font-weight:700;box-shadow:0 0 14px var(--sel-glow)}
+.bar.skip{opacity:.35;background:repeating-linear-gradient(135deg,var(--bar) 0 6px,transparent 6px 12px)}
+.rail{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.rail .track{height:34px;background:var(--soft)}
+.rail .bar{top:3px;bottom:3px;background:var(--sel);color:#04130d;font-weight:700;box-shadow:0 0 14px var(--sel-glow);font-size:.74rem}
+.rail .lname{font-weight:700;color:var(--accent)}
+.score{text-align:center}
+.ring{position:relative;width:150px;height:150px;margin:6px auto 8px}
+.ring svg{transform:rotate(-90deg)}
+.ring .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring b{font-size:2rem;line-height:1;color:var(--okc)}
+.ring small{color:var(--muted);font-size:.72rem}
+.mini{font-size:.82rem;color:var(--muted)}
+.steps{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.step{flex:1 1 160px;background:var(--soft);border-radius:12px;padding:10px 12px;border-left:4px solid var(--sel)}
+.step b{display:block}
+.step span{color:var(--muted);font-size:.8rem}
+.ok{color:var(--okc);font-weight:700}
+.err{color:var(--bad);font-weight:700}
+.empty{color:var(--muted);text-align:center;padding:18px 0}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>⚡ Feeder Schedule <span>Planner</span></h1>
+      <p class="tag">Smartly schedule multiple appliances while avoiding overlapping usage.</p>
+    </div>
+    <div class="pill" id="pill"><span class="dot"></span><span id="pillText">Waiting for optimization</span></div>
+  </header>
+
+  <section class="panel">
+    <div class="chips" id="chips"></div>
+    <div class="form">
+      <div><label for="fid">Request ID</label><input id="fid" type="number" min="0"></div>
+      <div class="wide"><label for="fname">Appliance or EV</label><input id="fname" type="text" placeholder="EV Charging"></div>
+      <div><label for="fstart">Start</label><input id="fstart" type="time"></div>
+      <div><label for="ffinish">Finish</label><input id="ffinish" type="time"></div>
+      <div><label for="fvalue">Value</label><input id="fvalue" type="number" min="0" placeholder="100"></div>
+      <button class="btn" id="add">Add</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </section>
+
+  <div class="top">
+    <section class="panel">
+      <div class="tl-head">
+        <h2>Requests on the day timeline</h2>
+        <div>
+          <button class="btn ghost" id="clear">Clear</button>
+          <button class="btn" id="run">Find best schedule</button>
+        </div>
+      </div>
+      <div class="scroll"><div class="grid" id="grid"></div></div>
+    </section>
+
+    <section class="panel score">
+      <h2 style="margin:0;font-size:1rem">Value captured</h2>
+      <div class="ring">
+        <svg width="150" height="150" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="var(--green-soft)" stroke-width="9"/>
+          <circle id="arc" cx="50" cy="50" r="42" fill="none" stroke="var(--green)" stroke-width="9" stroke-linecap="round"
+            stroke-dasharray="0 264" style="transition:stroke-dasharray .9s ease"/>
+        </svg>
+        <div class="num"><b id="best">–</b><small id="ofTotal">run the optimizer</small></div>
+      </div>
+      <div class="mini" id="countTxt"></div>
+    </section>
+  </div>
+
+  <section class="panel" id="outPanel" style="display:none">
+    <div class="sub"><h2>Optimal schedule on the feeder</h2></div>
+    <div class="scroll"><div class="grid" id="optGrid"></div></div>
+    <p id="verdict" style="margin:12px 0 0"></p>
+  </section>
+</main>
+
+<script>
+var reqs = [], result = null, nextId = 1;
+var PRESETS = [["🧺","Washing Machine"],["🚗","EV Charging"],["🍽️","Dishwasher"],["❄️","AC"],["🔥","Water Heater"],["🍳","Electric Oven"]];
+
+function toMin(t){ var p = t.split(":"); return parseInt(p[0],10)*60 + parseInt(p[1],10); }
+function fmt(m){ var h = Math.floor(m/60), mm = m%60; return (h<10?"0":"")+h+":"+(mm<10?"0":"")+mm; }
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function icon(n){
+  n = n.toLowerCase();
+  if (/wash/.test(n)) return "🧺"; if (/ev|car/.test(n)) return "🚗"; if (/dish/.test(n)) return "🍽️";
+  if (/\bac\b|air/.test(n)) return "❄️"; if (/heater/.test(n)) return "🔥"; if (/oven/.test(n)) return "🍳";
+  if (/fridge|refrig/.test(n)) return "🧊"; return "⚡";
+}
+function byFinish(a,b){ return a.finish - b.finish || a.start - b.start; }
+function suggestId(){ return reqs.reduce(function(m, q){ return Math.max(m, q.id); }, 0) + 1; }
+
+// ---- DP: sort, p(i) by binary search, fill table, backtrack ----
+function findP(jobs, i){
+  var lo = 1, hi = i - 1, ans = 0;
+  while (lo <= hi){ var mid = (lo + hi) >> 1;
+    if (jobs[mid].finish <= jobs[i].start){ ans = mid; lo = mid + 1; } else hi = mid - 1; }
+  return ans;
+}
+function weightedDP(list){
+  var n = list.length, jobs = [null].concat(list.slice().sort(byFinish)), p = [0], dp = [0], i;
+  for (i = 1; i <= n; i++) p[i] = findP(jobs, i);
+  for (i = 1; i <= n; i++) dp[i] = Math.max(jobs[i].value + dp[p[i]], dp[i-1]);
+  var sel = []; i = n;
+  while (i > 0){ if (jobs[i].value + dp[p[i]] > dp[i-1]){ sel.push(jobs[i]); i = p[i]; } else i--; }
+  return sel.reverse();
+}
+function overlaps(sel){
+  for (var k = 0; k + 1 < sel.length; k++) if (sel[k].finish > sel[k+1].start) return [sel[k], sel[k+1]];
+  return null;
+}
+
+// ---- rendering ----
+function range(){
+  var lo = Math.min.apply(null, reqs.map(function(r){ return r.start; }));
+  var hi = Math.max.apply(null, reqs.map(function(r){ return r.finish; }));
+  lo = Math.floor(lo / 60) * 60; hi = Math.ceil(hi / 60) * 60;
+  if (hi - lo < 240) hi = lo + 240;
+  return [lo, hi];
+}
+function pos(m, lo, span){ return (m - lo) / span * 100; }
+
+function renderGrid(){
+  var g = document.getElementById("grid");
+  if (!reqs.length){ g.innerHTML = '<div class="empty">No requests yet. Pick an appliance above and add your first request.</div>'; return; }
+  var r = range(), lo = r[0], hi = r[1], span = hi - lo, hours = span / 60, step = hours > 12 ? 2 : 1, h = "", t;
+  var tick = 100 / (hours / step);
+  h += '<div class="axis"><div></div><div class="ticks">';
+  for (t = lo; t <= hi; t += 60 * step) h += '<span style="left:'+pos(t,lo,span)+'%">'+fmt(t)+'</span>';
+  h += '</div></div>';
+  var order = reqs.slice().sort(function(a,b){ return a.start - b.start; });
+  order.forEach(function(q, idx){
+    var cls = "bar", delay = 0;
+    if (result){
+      var k = result.indexOf(q);
+      cls += k >= 0 ? " sel" : " skip"; delay = k >= 0 ? k * 120 : 0;
+    }
+    h += '<div class="lane"><div class="lname">'+icon(q.name)+' '+esc(q.name)+' <small>#'+q.id+'</small><button data-id="'+q.id+'" title="Remove">✕</button></div>' +
+         '<div class="track" style="--tick:'+tick+'%"><div class="'+cls+'" style="left:'+pos(q.start,lo,span)+'%;width:'+((q.finish-q.start)/span*100)+'%;transition-delay:'+delay+'ms">'+fmt(q.start)+'–'+fmt(q.finish)+' · '+q.value+'</div></div></div>';
+  });
+  g.innerHTML = h;
+}
+
+function renderOptimal(){
+  var g = document.getElementById("optGrid");
+  if (!result || !result.length){ g.innerHTML = '<div class="empty">Nothing to schedule.</div>'; return; }
+  var r = range(), lo = r[0], hi = r[1], span = hi - lo, hours = span / 60, step = hours > 12 ? 2 : 1, t;
+  var tick = 100 / (hours / step);
+  var h = '<div class="axis"><div></div><div class="ticks">';
+  for (t = lo; t <= hi; t += 60 * step) h += '<span style="left:'+pos(t,lo,span)+'%">'+fmt(t)+'</span>';
+  h += '</div></div>';
+  result.forEach(function(q){
+    h += '<div class="lane"><div class="lname">'+icon(q.name)+' '+esc(q.name)+' <small>#'+q.id+'</small></div>' +
+         '<div class="track" style="--tick:'+tick+'%"><div class="bar sel" style="left:'+pos(q.start,lo,span)+'%;width:'+((q.finish-q.start)/span*100)+'%">'+fmt(q.start)+'–'+fmt(q.finish)+' · '+q.value+'</div></div></div>';
+  });
+  g.innerHTML = h;
+}
+
+function renderScore(){
+  var arc = document.getElementById("arc"), C = 2 * Math.PI * 42;
+  var best = document.getElementById("best"), of = document.getElementById("ofTotal"), cnt = document.getElementById("countTxt");
+  var pill = document.getElementById("pill"), pt = document.getElementById("pillText");
+  var out = document.getElementById("outPanel");
+  if (!result){
+    arc.setAttribute("stroke-dasharray", "0 " + C); best.textContent = "–"; of.textContent = "run the optimizer";
+    cnt.textContent = ""; pill.className = "pill"; pt.textContent = "Waiting for optimization"; out.style.display = "none"; return;
+  }
+  var sum = result.reduce(function(s,q){ return s + q.value; }, 0);
+  var all = reqs.reduce(function(s,q){ return s + q.value; }, 0) || 1;
+  arc.setAttribute("stroke-dasharray", (C * sum / all) + " " + C);
+  best.textContent = sum; of.textContent = "of " + all + " requested";
+  cnt.textContent = result.length + " of " + reqs.length + " requests scheduled";
+  pill.className = "pill live"; pt.textContent = "Feeder schedule ready";
+
+  renderOptimal();
+  var bad = overlaps(result);
+  document.getElementById("verdict").innerHTML = bad
+    ? '<span class="err">Overlap detected between '+esc(bad[0].name)+' and '+esc(bad[1].name)+'.</span>'
+    : '<span class="ok">No overlap detected — all selected requests are compatible.</span>';
+  out.style.display = "block";
+}
+function render(){ renderGrid(); renderScore(); }
+function invalidate(){ result = null; render(); document.getElementById("fid").value = suggestId(); }
+
+// ---- events ----
+(function(){
+  var c = document.getElementById("chips");
+  PRESETS.forEach(function(p){
+    var b = document.createElement("button"); b.className = "chip"; b.textContent = p[0] + " " + p[1];
+    b.onclick = function(){ document.getElementById("fname").value = p[1]; document.getElementById("fstart").focus(); };
+    c.appendChild(b);
+  });
+})();
+
+document.getElementById("add").onclick = function(){
+  var msg = document.getElementById("msg"); msg.textContent = "";
+  var id = parseInt(document.getElementById("fid").value, 10),
+      name = document.getElementById("fname").value.trim().replace(/\s+/g, " "), s = document.getElementById("fstart").value,
+      f = document.getElementById("ffinish").value, v = parseInt(document.getElementById("fvalue").value, 10);
+  if (isNaN(id) || id < 0){ msg.textContent = "Please enter a valid request ID."; return; }
+  if (reqs.some(function(q){ return q.id === id; })){
+    msg.textContent = "Request ID " + id + " is already used. The request ID must not be the same as an already entered one."; return; }
+  if (!name || !s || !f || isNaN(v)){ msg.textContent = "Please fill in name, start, finish and value."; return; }
+  if (!/^[A-Za-z]+( [A-Za-z]+)*$/.test(name)){ msg.textContent = "Invalid name. Use letters only (spaces allowed), e.g. Washing Machine."; return; }
+  if (v < 0){ msg.textContent = "Value must not be negative."; return; }
+  if (toMin(s) >= toMin(f)){ msg.textContent = "Finish time must be later than start time."; return; }
+  reqs.push({id:id, name:name, start:toMin(s), finish:toMin(f), value:v});
+  ["fname","fstart","ffinish","fvalue"].forEach(function(x){ document.getElementById(x).value = ""; });
+  invalidate();
+  document.getElementById("fname").focus();
+};
+document.getElementById("clear").onclick = function(){ reqs = []; nextId = 1; invalidate(); };
+document.getElementById("grid").onclick = function(e){
+  var id = e.target.getAttribute && e.target.getAttribute("data-id");
+  if (id){ reqs = reqs.filter(function(q){ return q.id !== parseInt(id, 10); }); invalidate(); }
+};
+document.getElementById("run").onclick = function(){
+  if (!reqs.length) return;
+  result = null; renderGrid();                      // reset bars so the animation replays
+  var sel = weightedDP(reqs);
+  result = sel.map(function(s){ return reqs.filter(function(q){ return q.id === s.id; })[0]; });
+  setTimeout(render, 30);
+};
+
+// Enter key: move to the next input; on the last input (Value) add the request
+(function(){
+  var order = ["fid","fname","fstart","ffinish","fvalue"];
+  order.forEach(function(id, i){
+    document.getElementById(id).addEventListener("keydown", function(e){
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      if (i < order.length - 1) document.getElementById(order[i + 1]).focus();
+      else document.getElementById("add").click();
+    });
+  });
+})();
+
+// Name box accepts letters and spaces only
+document.getElementById("fname").addEventListener("input", function(e){
+  var clean = e.target.value.replace(/[^A-Za-z ]/g, "");
+  if (clean !== e.target.value){
+    e.target.value = clean;
+    document.getElementById("msg").textContent = "Only letters are allowed in the appliance name.";
+  }
+});
+
+render();
+document.getElementById("fid").value = suggestId();
+</script>
+</body>
+</html>

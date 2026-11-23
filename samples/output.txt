@@ -1,0 +1,75 @@
+=========== INPUT REQUESTS ===========
+----------------------------------------------------------------
+ID    Request               Start   Finish  Value   
+----------------------------------------------------------------
+1     Washing Machine       07:00   09:00   40      
+2     EV Charging           08:00   11:00   100     
+3     Dishwasher            09:00   10:00   30      
+4     Water Heater          11:00   12:00   50      
+5     AC                    11:30   14:00   70      
+6     Clothes Dryer         12:00   14:00   55      
+7     Electric Oven         14:00   15:00   45      
+----------------------------------------------------------------
+
+=========== 1. UNWEIGHTED GREEDY (Earliest Finish Time) ===========
+----------------------------------------------------------------
+ID    Request               Start   Finish  Value   
+----------------------------------------------------------------
+1     Washing Machine       07:00   09:00   40      
+3     Dishwasher            09:00   10:00   30      
+4     Water Heater          11:00   12:00   50      
+6     Clothes Dryer         12:00   14:00   55      
+7     Electric Oven         14:00   15:00   45      
+----------------------------------------------------------------
+Number of selected requests : 5
+Total value of selection    : 220  (greedy ignores values)
+No overlap detected - all selected requests are compatible.
+
+=========== 2. WEIGHTED INTERVAL SCHEDULING (DP) ===========
+Selected requests (chronological order):
+----------------------------------------------------------------
+ID    Request               Start   Finish  Value   
+----------------------------------------------------------------
+2     EV Charging           08:00   11:00   100     
+4     Water Heater          11:00   12:00   50      
+6     Clothes Dryer         12:00   14:00   55      
+7     Electric Oven         14:00   15:00   45      
+----------------------------------------------------------------
+Number of selected requests : 4
+Maximum total value         : 250
+No overlap detected - all selected requests are compatible.
+
+=========== 3. GREEDY FAILURE CASE (from your input) ===========
+Greedy total value : 220  (5 requests)
+DP optimal value   : 250  (4 requests)
+
+GREEDY FAILS on your input.
+
+Greedy solution (earliest finish time):
+----------------------------------------------------------------
+ID    Request               Start   Finish  Value   
+----------------------------------------------------------------
+1     Washing Machine       07:00   09:00   40      
+3     Dishwasher            09:00   10:00   30      
+4     Water Heater          11:00   12:00   50      
+6     Clothes Dryer         12:00   14:00   55      
+7     Electric Oven         14:00   15:00   45      
+----------------------------------------------------------------
+Greedy total value  = 220
+
+Optimal solution (DP):
+----------------------------------------------------------------
+ID    Request               Start   Finish  Value   
+----------------------------------------------------------------
+2     EV Charging           08:00   11:00   100     
+4     Water Heater          11:00   12:00   50      
+6     Clothes Dryer         12:00   14:00   55      
+7     Electric Oven         14:00   15:00   45      
+----------------------------------------------------------------
+Optimal total value = 250
+
+Value lost by greedy = 30
+
+Earliest finish time maximizes the NUMBER of compatible requests,
+but it does not necessarily maximize their TOTAL VALUE.
+So the unweighted greedy algorithm cannot directly solve the weighted problem.

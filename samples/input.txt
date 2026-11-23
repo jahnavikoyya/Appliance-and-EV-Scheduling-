@@ -1,0 +1,37 @@
+
+7
+1
+Washing Machine
+07:00
+09:00
+40
+2
+EV Charging 
+08:00
+11:00
+100
+3
+Dishwasher
+09:00
+10:00
+30
+4
+Water Heater
+11:00
+12:00
+50
+5
+AC
+11:30
+14:00
+70
+6
+Clothes Dryer
+12:00
+14:00
+55
+7
+Electric Oven
+14:00
+15:00
+45
