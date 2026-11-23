@@ -72,7 +72,7 @@ To try the sample input:
 
 Open `index.html` in a browser. No installation is needed.
 
-Live page: Not Available yet.
+Live page: 'https://jahnavikoyya.github.io/Appliance-and-EV-Scheduling-/'
 
 ## Sample result
 
